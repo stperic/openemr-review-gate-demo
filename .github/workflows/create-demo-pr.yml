@@ -2,6 +2,15 @@ name: Create OpenEMR demo candidate
 
 on:
   workflow_dispatch:
+    inputs:
+      stage:
+        description: Candidate stage to run from trusted main
+        type: choice
+        required: true
+        default: create
+        options:
+          - create
+          - fix
 
 permissions:
   contents: write
@@ -9,6 +18,7 @@ permissions:
 
 jobs:
   create-candidate:
+    if: inputs.stage == 'create'
     runs-on: ubuntu-latest
     steps:
       - name: Check out trusted main
@@ -40,3 +50,26 @@ jobs:
           gh pr create --base main --head demo/payment-boundary \
             --title 'Demo: payment credential boundary gate' \
             --body 'Pinned OpenEMR D05 component with synthetic keys. This initial head is intentionally vulnerable to demonstrate the required boundary check. The ZZ-Trace graph is a retrospective draft. The fixed derivative, Snyk disposition, and human review will be added as separate evidence.'
+  apply-fixed-derivative:
+    if: inputs.stage == 'fix'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out trusted main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: true
+      - name: Apply pinned payment correction as github-actions bot
+        run: |
+          set -euo pipefail
+          cp demo/fixed-derivative.patch /tmp/openemr-fixed-derivative.patch
+          git fetch origin demo/payment-boundary:refs/remotes/origin/demo/payment-boundary
+          git switch -c demo/payment-boundary --track origin/demo/payment-boundary
+          test "$(sha256sum portal/portal_payment.php | cut -d' ' -f1)" = 'efa1a9ab3fb6a881ea6590ebafa9b93ae43b25d601fe584721a1a97ed0ba15ab'
+          git apply --check -p1 /tmp/openemr-fixed-derivative.patch
+          git apply -p1 /tmp/openemr-fixed-derivative.patch
+          test "$(sha256sum portal/portal_payment.php | cut -d' ' -f1)" = '993041d08967330c7bd849d0eb7ba09421b8666a8a55842f08c5d304f065a9b4'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add portal/portal_payment.php
+          git commit -m 'Keep Stripe private credential out of browser response'
+          git push origin HEAD:demo/payment-boundary
