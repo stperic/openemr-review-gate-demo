@@ -1,0 +1,78 @@
+{
+  "evidence_type": "exploratory_routing_not_gate",
+  "human_adjudication": "pending",
+  "probabilities": {
+    "personal_data_access": 0.49,
+    "authorization_boundary": 0.64,
+    "patient_tenant_scoping": 0.76,
+    "sql_construction": 0.95,
+    "command_parser_output": 0.98,
+    "sensitive_data_flow": 0.93,
+    "security_configuration": 0.61,
+    "insufficient_context": 0.9
+  },
+  "percentages": {
+    "personal_data_access": "49%",
+    "authorization_boundary": "64%",
+    "patient_tenant_scoping": "76%",
+    "sql_construction": "95%",
+    "command_parser_output": "98%",
+    "sensitive_data_flow": "93%",
+    "security_configuration": "61%",
+    "insufficient_context": "90%"
+  },
+  "signal_states": {
+    "personal_data_access": "uncertain",
+    "authorization_boundary": "high",
+    "patient_tenant_scoping": "high",
+    "sql_construction": "high",
+    "command_parser_output": "high",
+    "sensitive_data_flow": "high",
+    "security_configuration": "uncertain",
+    "insufficient_context": "high"
+  },
+  "model_selected_actions": [
+    "ai:boundary",
+    "ai:construction",
+    "ai:data",
+    "ai:sql",
+    "approve:boundary",
+    "approve:privacy",
+    "check:boundary",
+    "check:sast",
+    "check:secrets",
+    "human:triage"
+  ],
+  "mandatory_actions": [
+    "approve:appsec",
+    "approve:peer",
+    "check:boundary",
+    "check:sast",
+    "check:tests"
+  ],
+  "effective_required_actions": [
+    "ai:boundary",
+    "ai:construction",
+    "ai:data",
+    "ai:sql",
+    "approve:appsec",
+    "approve:boundary",
+    "approve:peer",
+    "approve:privacy",
+    "check:boundary",
+    "check:sast",
+    "check:secrets",
+    "check:tests",
+    "human:triage"
+  ],
+  "pending_reasons": [
+    "ai_configuration_not_approved",
+    "model_reports_missing_context",
+    "trusted_context_incomplete",
+    "unavailable_required_reviewer",
+    "uncertain:personal_data_access",
+    "uncertain:security_configuration"
+  ],
+  "review_completed": false,
+  "merge_approved": false
+}

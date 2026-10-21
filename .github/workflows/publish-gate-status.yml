@@ -58,6 +58,29 @@ jobs:
             test "$(jq -r '.status' /tmp/openemr-payment-check.json)" = 'passed'
             gate_state='pending'
             gate_description='Payment boundary passed; Snyk, routing and human review pending'
+            if test "${target_head}" = '3d04a6005fdee741b5f56c76fa5043232370f119'; then
+              test "$(sha256sum demo/evidence/fixed-head-snyk.sarif.json | cut -d' ' -f1)" = 'fc00cfd3a839b99c98e3f6468cc9adea094abddc269d421a67bd47499db6ada5'
+              test "$(jq '.runs[0].results | length' demo/evidence/fixed-head-snyk.sarif.json)" = '36'
+              test "$(sha256sum demo/evidence/jev-routing.json | cut -d' ' -f1)" = 'c3d02f4c20d1da9ad8472a829346a8140d294d4814005690e14a1d3401dc9b0e'
+              test "$(sha256sum demo/evidence/specialist-boundary.txt | cut -d' ' -f1)" = '9e73939175d00ede462ae9082e7b35cebc4f8b912381d80607deaf25fb7e85d0'
+              test "$(jq -r '.review_status' demo/evidence/specialist-boundary.txt)" = 'complete'
+              gh api "repos/${GITHUB_REPOSITORY}/pulls/1/reviews?per_page=100" > /tmp/openemr-reviews.json
+              jq -c '[.[] | select(.user.login == "stperic" and (.state == "APPROVED" or .state == "CHANGES_REQUESTED" or .state == "DISMISSED"))] | sort_by(.submitted_at, .id) | last // {}' /tmp/openemr-reviews.json > /tmp/openemr-latest-review.json
+              review_state="$(jq -r '.state // ""' /tmp/openemr-latest-review.json)"
+              review_head="$(jq -r '.commit_id // ""' /tmp/openemr-latest-review.json)"
+              jq -r '.body // ""' /tmp/openemr-latest-review.json | tr -d '\r' > /tmp/openemr-review-body.txt
+              if test "${review_state}" = 'APPROVED' && test "${review_head}" = "${target_head}" && \
+                 grep -Fqx "D05-HEAD: ${target_head}" /tmp/openemr-review-body.txt && \
+                 grep -Fqx 'D05-SNYK-SHA256: fc00cfd3a839b99c98e3f6468cc9adea094abddc269d421a67bd47499db6ada5' /tmp/openemr-review-body.txt && \
+                 grep -Fqx 'D05-SNYK-DISPOSITION: accepted-for-scoped-demo' /tmp/openemr-review-body.txt && \
+                 grep -Fqx 'D05-ROUTING-DISPOSITION: selected-work-reviewed' /tmp/openemr-review-body.txt && \
+                 grep -Fqx 'D05-TRACE-DISPOSITION: accepted-retrospective-demo-control' /tmp/openemr-review-body.txt && \
+                 grep -Eq '^D05-SNYK-RATIONALE: .{20,}$' /tmp/openemr-review-body.txt && \
+                 grep -Eq '^D05-ROUTING-RATIONALE: .{20,}$' /tmp/openemr-review-body.txt; then
+                gate_state='success'
+                gate_description='Current-head payment, evidence dispositions and human approval verified'
+              fi
+            fi
           fi
           gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${target_head}" \
             -f "state=${gate_state}" \
