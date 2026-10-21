@@ -557,7 +557,6 @@ if ($_POST['form_save'] || $_REQUEST['receipt']) {
             echo json_encode($amsg); // backward compatable 5.0.1
             ?>;
         var publicKey = <?php echo json_encode($GLOBALS['gateway_public_key']); ?>;
-        var apiKey = <?php echo json_encode($GLOBALS['gateway_api_key']); ?>;
 
         function calctotal() {
             var flag = 0;
@@ -1499,11 +1498,12 @@ if ($GLOBALS['payment_gateway'] == 'Stripe') { ?>
         // credit info off the server.
         ?>
         <script type="text/javascript">
+            var apiLoginID = <?php echo json_encode($GLOBALS['gateway_api_key']); ?>;
             function sendPaymentDataToAnet(e) {
                 e.preventDefault();
                 const authData = {};
                 authData.clientKey = publicKey;
-                authData.apiLoginID = apiKey;
+                authData.apiLoginID = apiLoginID;
 
                 const cardData = {};
                 cardData.cardNumber = document.getElementById("cardNumber").value;
