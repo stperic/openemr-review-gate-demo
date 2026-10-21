@@ -1,0 +1,69 @@
+name: Publish trusted payment gate status
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Historical vulnerable head or current PR head
+        required: true
+        type: choice
+        default: fixed
+        options:
+          - vulnerable
+          - fixed
+
+permissions:
+  contents: read
+  pull-requests: read
+  statuses: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out trusted main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Fetch authenticated candidate and run isolated payment oracle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVISION: ${{ inputs.revision }}
+        run: |
+          set -euo pipefail
+          gh api repos/${GITHUB_REPOSITORY}/pulls/1 > /tmp/openemr-pr.json
+          test "$(jq -r '.state' /tmp/openemr-pr.json)" = 'open'
+          test "$(jq -r '.head.repo.full_name' /tmp/openemr-pr.json)" = "${GITHUB_REPOSITORY}"
+          test "$(jq -r '.head.ref' /tmp/openemr-pr.json)" = 'demo/payment-boundary'
+          test "$(jq -r '.user.login' /tmp/openemr-pr.json)" = 'github-actions[bot]'
+          git fetch --no-tags origin demo/payment-boundary
+          current_head="$(jq -r '.head.sha' /tmp/openemr-pr.json)"
+          test "$(git rev-parse FETCH_HEAD)" = "${current_head}"
+          if test "${REVISION}" = 'vulnerable'; then
+            target_head='b86d9cf413e01cba27dccdf96c27aed66bfcf826'
+            git merge-base --is-ancestor "${target_head}" "${current_head}"
+          else
+            target_head="${current_head}"
+          fi
+          git show "${target_head}:portal/portal_payment.php" > /tmp/openemr-candidate.php
+          set +e
+          python3 tests/pay_secret.py /tmp/openemr-candidate.php > /tmp/openemr-payment-check.json
+          check_exit=$?
+          set -e
+          cat /tmp/openemr-payment-check.json
+          if test "${check_exit}" -ne 0; then
+            gate_state='failure'
+            gate_description='Isolated payment boundary failed or could not run'
+          else
+            test "$(jq -r '.status' /tmp/openemr-payment-check.json)" = 'passed'
+            gate_state='pending'
+            gate_description='Payment boundary passed; Snyk, routing and human review pending'
+          fi
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/statuses/${target_head}" \
+            -f "state=${gate_state}" \
+            -f 'context=demo/policy-gate' \
+            -f "description=${gate_description}" \
+            -f "target_url=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" > /tmp/openemr-status.json
+          test "$(jq -r '.state' /tmp/openemr-status.json)" = "${gate_state}"
+          test "$(jq -r '.context' /tmp/openemr-status.json)" = 'demo/policy-gate'
+          echo "Published ${gate_state} for ${target_head} from trusted main workflow."
