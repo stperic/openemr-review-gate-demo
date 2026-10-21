@@ -1,0 +1,42 @@
+name: Create OpenEMR demo candidate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out trusted main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: true
+      - name: Create vulnerable candidate PR as github-actions bot
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code origin refs/heads/demo/payment-boundary >/dev/null 2>&1; then
+            echo 'Candidate branch already exists; refusing a duplicate.' >&2
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c demo/payment-boundary
+          cat > CANDIDATE.md <<'EOF'
+          # Candidate PR sequence
+
+          Initial head: pinned vulnerable OpenEMR payment component, expected to fail the private credential check.
+
+          After the blocked state is captured, a corrected derivative will be committed to this branch. Fresh checks and a review of the current head will then be required.
+          EOF
+          git add CANDIDATE.md
+          git commit -m 'Open vulnerable payment candidate for gate demonstration'
+          git push --set-upstream origin demo/payment-boundary
+          gh pr create --base main --head demo/payment-boundary \
+            --title 'Demo: payment credential boundary gate' \
+            --body 'Pinned OpenEMR D05 component with synthetic keys. This initial head is intentionally vulnerable to demonstrate the required boundary check. The ZZ-Trace graph is a retrospective draft. The fixed derivative, Snyk disposition, and human review will be added as separate evidence.'
