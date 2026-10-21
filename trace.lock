@@ -1,0 +1,7 @@
+trace.lock 1
+RC-PAYMENT-SECRET-SERVER controls RISK-PAYMENT-CREDENTIAL-DISCLOSURE source=f1:gDm72uipaXlrNv4P-8X11NUMX07d3EqcVz4eakdLyS8 target=f1:VPMklsoDegZyOCytPEY7CkSaNwTnHl80gE0dYUT7UN8
+RC-PAYMENT-SECRET-SERVER refines NEED-PAYMENT-BOUNDARY source=f1:gDm72uipaXlrNv4P-8X11NUMX07d3EqcVz4eakdLyS8 target=f1:wf4jTUzK1pJ3T9pQmjRyu9eQ2hEOLE16h-3L5_feavM
+library/globals.inc.php implements RC-PAYMENT-SECRET-SERVER source.sig=lf1:qJM5Ef0gUAIcV6tSH6zfAmsEHs7I27T0_lhyFKj7_dI target=f1:gDm72uipaXlrNv4P-8X11NUMX07d3EqcVz4eakdLyS8
+portal/lib/paylib.php implements RC-PAYMENT-SECRET-SERVER source.sig=lf1:hN0ApRlYh5K7ALet4XiJBC1h3C5rS-QY75bLRk6oxXg target=f1:gDm72uipaXlrNv4P-8X11NUMX07d3EqcVz4eakdLyS8
+portal/portal_payment.php implements RC-PAYMENT-SECRET-SERVER source.sig=lf1:76Gpqz-2qIHqZZDrr6m5OuQ7JdYB_lhHIaGpftC6Fas target=f1:gDm72uipaXlrNv4P-8X11NUMX07d3EqcVz4eakdLyS8
+tests/pay_secret.py verifies RC-PAYMENT-SECRET-SERVER source.sig=lf1:1_Cxelbrk9Sxvk7KEvNEmiVCLPiiRW6BhZAJbWlELZY target=f1:gDm72uipaXlrNv4P-8X11NUMX07d3EqcVz4eakdLyS8

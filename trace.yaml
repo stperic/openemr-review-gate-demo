@@ -1,0 +1,25 @@
+ostf: "0.1"
+items:
+  - id: NEED-PAYMENT-BOUNDARY
+    type: need
+    status: draft
+    title: Keep private payment credentials server side
+    text: A portal patient can complete a payment without receiving a private payment gateway credential in the browser.
+  - id: RISK-PAYMENT-CREDENTIAL-DISCLOSURE
+    type: risk
+    status: draft
+    title: Private payment credential reaches the browser
+    text: A private gateway API secret in executable page content could be copied and misused by a portal visitor.
+  - id: RC-PAYMENT-SECRET-SERVER
+    type: requirement
+    status: draft
+    title: Keep the private gateway secret out of client responses
+    text: The portal payment response must not contain the configured private gateway credential when Stripe is selected. A documented public client identifier may be present.
+    refines: [NEED-PAYMENT-BOUNDARY]
+    controls: [RISK-PAYMENT-CREDENTIAL-DISCLOSURE]
+    code:
+      - portal/portal_payment.php
+      - library/globals.inc.php
+      - portal/lib/paylib.php
+    tests:
+      - tests/pay_secret.py

@@ -1,0 +1,3 @@
+# Retrospective D05 trace proposal
+
+Authored for this demo on 2026-10-20. These draft items are not historical OpenEMR requirements. They express a proposed payment credential boundary based on the pinned historical gateway configuration and portal source. The code and test links are whole-file links. PHP locator precision is not claimed. The test uses a synthetic Stripe secret and public client value in a component harness. An independent owner has not accepted the requirement, risk control, links or test oracle. Until that review, Path D treats the graph as a what-if and routes the obligation to human triage.
